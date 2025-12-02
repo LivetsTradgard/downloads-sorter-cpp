@@ -1,0 +1,33 @@
+# Visual Studio
+.vs/
+*.vcxproj.user
+
+# Build directories
+Debug/
+Release/
+x64/
+x86/
+bld/
+ipch/
+
+# Compiled binaries / intermediates
+*.obj
+*.exe
+*.ilk
+*.pdb
+*.idb
+*.tlog
+*.cache
+*.lastbuildstate
+
+# Logs
+*.log
+
+# Generated files
+*.sdf
+*.opensdf
+
+# CMake build folders
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
