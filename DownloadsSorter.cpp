@@ -1,5 +1,7 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
+#include <limits>
+#include <vector>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -8,6 +10,35 @@
 
 namespace fs = std::filesystem;
 
+// dublicates searher
+fs::path make_unique_target(const fs::path& target_dir,
+	const fs::path& filename) {
+	fs::path candidate = target_dir / filename;
+
+	if (!fs::exists(candidate)) {
+		return candidate;
+	}
+
+	// if file exists, add _1, _2
+	std::string base = filename.stem().string();      // without ext
+	std::string ext = filename.extension().string(); // ext
+	int counter = 1;
+
+	while (true) {
+		fs::path new_name = base + "_" + std::to_string(counter) + ext;
+		candidate = target_dir / new_name;
+		if (!fs::exists(candidate)) {
+			return candidate;
+		}
+		++counter;
+	}
+}
+
+
+
+
+
+// get path
 fs::path get_default_downloads_folder() {
 #ifdef _WIN32
 	if (const char* home = std::getenv("USERPROFILE")) { // if (home != nullptr)
@@ -122,12 +153,17 @@ int main() {
 	int executables = 0;
 	int others = 0;
 
+	std::vector<fs::path> files;
+
 
 	for (const auto& entry : fs::directory_iterator(downloads)) {
 		if (entry.is_regular_file()) {
-			std::string category = classify_extension(entry.path());
+			fs::path path = entry.path(); 
+			files.push_back(path);
 
-			std::cout << entry.path().extension().string()
+			std::string category = classify_extension(path);
+
+			std::cout << path.extension().string()
 				<< " -> " << category << "\n";
 
 			if (category == "Document")      ++docs;
@@ -142,6 +178,7 @@ int main() {
 		}
 	}
 
+
 	std::cout << "\n=== Summary ===\n";
 	std::cout << "Documents:   " << docs << "\n";
 	std::cout << "Images:      " << images << "\n";
@@ -153,7 +190,42 @@ int main() {
 	std::cout << "Executables: " << executables << "\n";
 	std::cout << "Other:       " << others << "\n";
 
+	std::cout << "\nSort files into subfolders by category? (y/n): ";
+	char answer = 'n';
+	if (!(std::cin >> answer)) {
+		std::cout << "Input error. Exiting.\n";
+		return 1;
+	}
 
+	if (answer != 'y' && answer != 'Y') {
+		std::cout << "Sorting cancelled.\n";
+		return 0;
+	}
+
+	// sort itself
+	for (const auto& path : files) {
+		std::string category = classify_extension(path);
+		std::string folder_name = category;
+		fs::path target_dir = downloads / folder_name;
+
+		try {
+			fs::create_directories(target_dir);
+			fs::path filename = path.filename();
+			fs::path target = make_unique_target(target_dir, filename);
+
+			fs::rename(path, target);
+
+			std::cout << "Moved: "
+				<< path.extension().string()
+				<< " -> " << folder_name << "\n";
+		}
+		catch (const std::exception& ex) {
+			std::cout << "Failed to move file with extension "
+				<< path.extension().string()
+				<< ": " << ex.what() << "\n";
+		}
+
+	}
 
 	return 0;
 }
