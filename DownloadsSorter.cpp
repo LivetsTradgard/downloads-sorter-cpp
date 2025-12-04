@@ -1,4 +1,5 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
+
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -111,6 +112,17 @@ int main() {
 		return 1;
 	}
 
+	int docs = 0;
+	int images = 0;
+	int music = 0;
+	int videos = 0;
+	int archives = 0;
+	int books = 0;
+	int torrents = 0;
+	int executables = 0;
+	int others = 0;
+
+
 	for (const auto& entry : fs::directory_iterator(downloads)) {
 		if (entry.is_regular_file()) {
 			std::string category = classify_extension(entry.path());
@@ -118,8 +130,30 @@ int main() {
 			std::cout << entry.path().extension().string()
 				<< " -> " << category << "\n";
 
+			if (category == "Document")      ++docs;
+			else if (category == "Image")    ++images;
+			else if (category == "Music")    ++music;
+			else if (category == "Video")    ++videos;
+			else if (category == "Archive")  ++archives;
+			else if (category == "Book")     ++books;
+			else if (category == "Torrent")  ++torrents;
+			else if (category == "Executable") ++executables;
+			else                             ++others;
 		}
 	}
+
+	std::cout << "\n=== Summary ===\n";
+	std::cout << "Documents:   " << docs << "\n";
+	std::cout << "Images:      " << images << "\n";
+	std::cout << "Music:       " << music << "\n";
+	std::cout << "Video:       " << videos << "\n";
+	std::cout << "Archives:    " << archives << "\n";
+	std::cout << "Books:       " << books << "\n";
+	std::cout << "Torrents:    " << torrents << "\n";
+	std::cout << "Executables: " << executables << "\n";
+	std::cout << "Other:       " << others << "\n";
+
+
 
 	return 0;
 }
