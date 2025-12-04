@@ -34,10 +34,6 @@ fs::path make_unique_target(const fs::path& target_dir,
 	}
 }
 
-
-
-
-
 // get path
 fs::path get_default_downloads_folder() {
 #ifdef _WIN32
@@ -108,7 +104,7 @@ int main()
             std::cout << "Invalid input.\n";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            continue; // назад в меню
+            continue;
         }
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // clear buffer
 
@@ -116,13 +112,13 @@ int main()
 
         if (option == 0) {
             std::cout << "Bye!\n";
-            break; // выходим из цикла, программа заканчивается
+            break;
         }
         else if (option == 1) {
             downloads = get_default_downloads_folder();
             if (downloads.empty()) {
                 std::cout << "Could not detect Downloads folder.\n";
-                continue; // вместо return 1; — просто обратно в меню
+                continue;
             }
         }
         else if (option == 2) {
@@ -198,7 +194,7 @@ int main()
         std::cout << "Executables: " << executables << "\n";
         std::cout << "Other:       " << others << "\n";
 
-        // спрашиваем, сортировать ли
+        // do you want to sort
         char answer = 'n';
         while (true) {
             std::cout << "\nSort files into subfolders by category? (y/n): ";
@@ -235,7 +231,7 @@ int main()
                         << " -> " << folder_name << "\n";
                 }
                 catch (const std::exception& ex) {
-                    std::cout << "Failed to move file with extension "
+                    std::cout << "Failed to move file with extension \n"
                         << path.extension().string()
                         << ": " << ex.what() << "\n";
                 }
@@ -246,7 +242,7 @@ int main()
             std::cout << "Sorting cancelled.\n";
         }
 
-        // спросим, хотим ли ещё одну папку
+        // again
         char again = 'n';
         while (true) {
             std::cout << "\nProcess another folder? (y/n): ";
