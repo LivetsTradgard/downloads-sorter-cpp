@@ -94,138 +94,181 @@ std::string classify_extension(const fs::path& p) {
 	return "Other";
 }
 
-int main() {
+int main()
+{
+    while (true) {
+        std::cout << "=== File Sorter ===\n";
+        std::cout << "1) Use detected Downloads folder\n";
+        std::cout << "2) Enter folder path manually\n";
+        std::cout << "0) Exit\n";
+        std::cout << "Choose option: ";
 
-	std::cout << "=== File Sorter ===\n";
-	std::cout << "1) Use detected Downloads folder\n";
-	std::cout << "2) Enter folder path manually\n";
-	std::cout << "0) Exit\n";
-	std::cout << "Choose option: ";
+        int option = 0;
+        if (!(std::cin >> option)) {
+            std::cout << "Invalid input.\n";
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            continue; // назад в меню
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // clear buffer
 
-	int option = 0;
-	if (!(std::cin >> option)) {
-		std::cout << "Invalid input.\n";
-		return 1;
-	}
-	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //clear buffer
+        fs::path downloads;
 
-	fs::path downloads;
+        if (option == 0) {
+            std::cout << "Bye!\n";
+            break; // выходим из цикла, программа заканчивается
+        }
+        else if (option == 1) {
+            downloads = get_default_downloads_folder();
+            if (downloads.empty()) {
+                std::cout << "Could not detect Downloads folder.\n";
+                continue; // вместо return 1; — просто обратно в меню
+            }
+        }
+        else if (option == 2) {
+            std::cout << "Enter path to folder: ";
+            std::string path;
+            if (!std::getline(std::cin, path)) {
+                std::cout << "Input error.\n";
+                continue;
+            }
+            if (path.empty()) {
+                std::cout << "Path is empty.\n";
+                continue;
+            }
+            downloads = path;
+        }
+        else {
+            std::cout << "Unknown option.\n";
+            continue;
+        }
 
-	if (option == 0) {
-		std::cout << "Bye!\n";
-		return 0;
-	}
-	else if (option == 1) {
-		downloads = get_default_downloads_folder();
-		if (downloads.empty()) {
-			std::cout << "Could not detect Downloads folder.\n";
-			return 1;
-		}
-	}
-	else if (option == 2) {
-		std::cout << "Enter path to folder: ";
-		std::string path;
-		std::getline(std::cin, path);
-		downloads = path;
-	}
-	else {
-		std::cout << "Unknown option.\n";
-		return 1;
-	}
+        if (!fs::exists(downloads)) {
+            std::cout << "This folder doesn't exist.\n";
+            continue;
+        }
 
-	if (!fs::exists(downloads)) {
-		std::cout << "This folder doesn't exist.\n";
-		return 1;
-	}
-	
-	if (!fs::is_directory(downloads)) {
-		std::cout << "This isn't a directory.\n";
-		return 1;
-	}
+        if (!fs::is_directory(downloads)) {
+            std::cout << "This isn't a directory.\n";
+            continue;
+        }
 
-	int docs = 0;
-	int images = 0;
-	int music = 0;
-	int videos = 0;
-	int archives = 0;
-	int books = 0;
-	int torrents = 0;
-	int executables = 0;
-	int others = 0;
+        int docs = 0;
+        int images = 0;
+        int music = 0;
+        int videos = 0;
+        int archives = 0;
+        int books = 0;
+        int torrents = 0;
+        int executables = 0;
+        int others = 0;
 
-	std::vector<fs::path> files;
+        std::vector<fs::path> files;
 
+        for (const auto& entry : fs::directory_iterator(downloads)) {
+            if (entry.is_regular_file()) {
+                fs::path path = entry.path();
+                files.push_back(path);
 
-	for (const auto& entry : fs::directory_iterator(downloads)) {
-		if (entry.is_regular_file()) {
-			fs::path path = entry.path(); 
-			files.push_back(path);
+                std::string category = classify_extension(path);
 
-			std::string category = classify_extension(path);
+                std::cout << path.extension().string()
+                    << " -> " << category << "\n";
 
-			std::cout << path.extension().string()
-				<< " -> " << category << "\n";
+                if (category == "Document")         ++docs;
+                else if (category == "Image")       ++images;
+                else if (category == "Music")       ++music;
+                else if (category == "Video")       ++videos;
+                else if (category == "Archive")     ++archives;
+                else if (category == "Book")        ++books;
+                else if (category == "Torrent")     ++torrents;
+                else if (category == "Executable")  ++executables;
+                else                                ++others;
+            }
+        }
 
-			if (category == "Document")      ++docs;
-			else if (category == "Image")    ++images;
-			else if (category == "Music")    ++music;
-			else if (category == "Video")    ++videos;
-			else if (category == "Archive")  ++archives;
-			else if (category == "Book")     ++books;
-			else if (category == "Torrent")  ++torrents;
-			else if (category == "Executable") ++executables;
-			else                             ++others;
-		}
-	}
+        std::cout << "\n=== Summary ===\n";
+        std::cout << "Documents:   " << docs << "\n";
+        std::cout << "Images:      " << images << "\n";
+        std::cout << "Music:       " << music << "\n";
+        std::cout << "Video:       " << videos << "\n";
+        std::cout << "Archives:    " << archives << "\n";
+        std::cout << "Books:       " << books << "\n";
+        std::cout << "Torrents:    " << torrents << "\n";
+        std::cout << "Executables: " << executables << "\n";
+        std::cout << "Other:       " << others << "\n";
 
+        // спрашиваем, сортировать ли
+        char answer = 'n';
+        while (true) {
+            std::cout << "\nSort files into subfolders by category? (y/n): ";
+            if (!(std::cin >> answer)) {
+                std::cout << "Input error.\n";
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                continue;
+            }
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-	std::cout << "\n=== Summary ===\n";
-	std::cout << "Documents:   " << docs << "\n";
-	std::cout << "Images:      " << images << "\n";
-	std::cout << "Music:       " << music << "\n";
-	std::cout << "Video:       " << videos << "\n";
-	std::cout << "Archives:    " << archives << "\n";
-	std::cout << "Books:       " << books << "\n";
-	std::cout << "Torrents:    " << torrents << "\n";
-	std::cout << "Executables: " << executables << "\n";
-	std::cout << "Other:       " << others << "\n";
+            if (answer == 'y' || answer == 'Y' || answer == 'n' || answer == 'N') {
+                break;
+            }
+            std::cout << "Please enter 'y' or 'n'.\n";
+        }
 
-	std::cout << "\nSort files into subfolders by category? (y/n): ";
-	char answer = 'n';
-	if (!(std::cin >> answer)) {
-		std::cout << "Input error. Exiting.\n";
-		return 1;
-	}
+        if (answer == 'y' || answer == 'Y') {
+            // sort itself
+            for (const auto& path : files) {
+                std::string category = classify_extension(path);
+                std::string folder_name = category;
+                fs::path target_dir = downloads / folder_name;
 
-	if (answer != 'y' && answer != 'Y') {
-		std::cout << "Sorting cancelled.\n";
-		return 0;
-	}
+                try {
+                    fs::create_directories(target_dir);
+                    fs::path filename = path.filename();
+                    fs::path target = make_unique_target(target_dir, filename);
 
-	// sort itself
-	for (const auto& path : files) {
-		std::string category = classify_extension(path);
-		std::string folder_name = category;
-		fs::path target_dir = downloads / folder_name;
+                    fs::rename(path, target);
 
-		try {
-			fs::create_directories(target_dir);
-			fs::path filename = path.filename();
-			fs::path target = make_unique_target(target_dir, filename);
+                    std::cout << "Moved: "
+                        << path.extension().string()
+                        << " -> " << folder_name << "\n";
+                }
+                catch (const std::exception& ex) {
+                    std::cout << "Failed to move file with extension "
+                        << path.extension().string()
+                        << ": " << ex.what() << "\n";
+                }
+            }
+            std::cout << "Sorting completed.\n";
+        }
+        else {
+            std::cout << "Sorting cancelled.\n";
+        }
 
-			fs::rename(path, target);
+        // спросим, хотим ли ещё одну папку
+        char again = 'n';
+        while (true) {
+            std::cout << "\nProcess another folder? (y/n): ";
+            if (!(std::cin >> again)) {
+                std::cout << "Input error.\n";
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                continue;
+            }
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-			std::cout << "Moved: "
-				<< path.extension().string()
-				<< " -> " << folder_name << "\n";
-		}
-		catch (const std::exception& ex) {
-			std::cout << "Failed to move file with extension "
-				<< path.extension().string()
-				<< ": " << ex.what() << "\n";
-		}
+            if (again == 'y' || again == 'Y' || again == 'n' || again == 'N') {
+                break;
+            }
+            std::cout << "Please enter 'y' or 'n'.\n";
+        }
 
-	}
+        if (again != 'y' && again != 'Y') {
+            std::cout << "Bye!\n";
+            break;
+        }
+    }
 
-	return 0;
+    return 0;
 }
